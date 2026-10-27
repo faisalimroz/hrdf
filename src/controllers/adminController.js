@@ -3,6 +3,7 @@ import Child from '../models/Child.js';
 import SponsorshipHistory from '../models/SponsorshipHistory.js';
 import Donation from '../models/Donation.js';
 import Blog from '../models/Blog.js';
+import News from '../models/News.js';
 import Initiative from '../models/Initiative.js';
 import SiteSetting from '../models/SiteSetting.js';
 
@@ -395,6 +396,137 @@ export const deleteBlog = async (req, res, next) => {
 };
 
 // ============================================================================
+// 4B. NEWS CMS
+// ============================================================================
+
+/**
+ * @route   GET /api/admin/news
+ * @desc    Fetch all news entries (including drafts) for CMS
+ * @access  Private/Admin
+ */
+export const getAdminNews = async (req, res, next) => {
+  try {
+    const { search, source, status, page = 1, limit = 15 } = req.query;
+
+    const query = {};
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { summary: { $regex: search, $options: 'i' } },
+        { source: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    if (source && source !== 'all') query.source = source;
+    if (status && status !== 'all') query.status = status;
+
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    const [news, total] = await Promise.all([
+      News.find(query).sort({ publishedDate: -1 }).skip(skip).limit(limitNum).lean(),
+      News.countDocuments(query),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      count: news.length,
+      total,
+      totalPages: Math.ceil(total / limitNum),
+      currentPage: pageNum,
+      news,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   POST /api/admin/news
+ * @desc    Create a news article
+ * @access  Private/Admin
+ */
+export const createNews = async (req, res, next) => {
+  try {
+    const { title, externalUrl, source, image, publishedDate, summary, status } = req.body;
+
+    if (!title || !externalUrl || !source || !image || !summary) {
+      return res.status(400).json({
+        success: false,
+        error: 'Title, external URL, source, image, and summary are required',
+      });
+    }
+
+    const news = await News.create({
+      title: title.trim(),
+      externalUrl: externalUrl.trim(),
+      source: source.trim(),
+      image: image.trim(),
+      publishedDate: publishedDate ? new Date(publishedDate) : new Date(),
+      summary: summary.trim(),
+      status: status || 'published',
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'News article added successfully',
+      news,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   PUT /api/admin/news/:id
+ * @desc    Update a news article
+ * @access  Private/Admin
+ */
+export const updateNews = async (req, res, next) => {
+  try {
+    const news = await News.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!news) {
+      return res.status(404).json({ success: false, error: 'News article not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'News article updated successfully',
+      news,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   DELETE /api/admin/news/:id
+ * @desc    Delete a news article
+ * @access  Private/Admin
+ */
+export const deleteNews = async (req, res, next) => {
+  try {
+    const news = await News.findByIdAndDelete(req.params.id);
+    if (!news) {
+      return res.status(404).json({ success: false, error: 'News article not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'News article deleted successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ============================================================================
 // 5. INITIATIVES CMS
 // ============================================================================
 
@@ -615,6 +747,10 @@ export default {
   createBlog,
   updateBlog,
   deleteBlog,
+  getAdminNews,
+  createNews,
+  updateNews,
+  deleteNews,
   createInitiative,
   updateInitiative,
   deleteInitiative,

@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import Blog from '../models/Blog.js';
+import News from '../models/News.js';
 import Initiative from '../models/Initiative.js';
 import Report from '../models/Report.js';
 import Career from '../models/Career.js';
@@ -112,6 +113,50 @@ export const seedContent = async () => {
         },
       ]);
       console.log('[ContentSeed] Seeded impact stories and news.');
+    }
+
+    // 2B. Seed Press & Media News
+    const newsCount = await News.countDocuments();
+    if (newsCount === 0) {
+      await News.insertMany([
+        {
+          title: 'Hdfd Foundation Expands Digital Primary Education to Haor Districts',
+          externalUrl: 'https://www.thedailystar.net',
+          source: 'The Daily Star',
+          image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80',
+          publishedDate: new Date('2026-10-12'),
+          summary: 'A special feature highlighting Hdfd Foundation’s solar-powered tablet classroom initiatives bridging rural digital disparities in Sunamganj and Habiganj.',
+          status: 'published',
+        },
+        {
+          title: 'Direct-Impact Philanthropy: How Hdfd Foundation Eliminates Overhead with Instant bKash Reconciliations',
+          externalUrl: 'https://www.tbsnews.net',
+          source: 'The Business Standard',
+          image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=800&q=80',
+          publishedDate: new Date('2026-10-04'),
+          summary: 'In-depth financial analysis detailing the foundation’s 100% auditable student adoption model ensuring transparent funding to student nutrition and uniforms.',
+          status: 'published',
+        },
+        {
+          title: 'Youth Battalions on the Frontline: Flood Relief Mobilization Across Eastern Bangladesh',
+          externalUrl: 'https://en.prothomalo.com',
+          source: 'Prothom Alo',
+          image: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=800&q=80',
+          publishedDate: new Date('2026-09-28'),
+          summary: 'National daily covers Hdfd youth volunteers delivering drinking water and emergency medical kits to marooned families in Feni and Noakhali.',
+          status: 'published',
+        },
+        {
+          title: 'From Street Children to National Olympiad Finalists: Inside Hdfd Classrooms',
+          externalUrl: 'https://www.dhakatribune.com',
+          source: 'Dhaka Tribune',
+          image: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=800&q=80',
+          publishedDate: new Date('2026-09-10'),
+          summary: 'Profile of three sponsored students from Dhaka slum branches who represented Bangladesh in international junior STEM competitions.',
+          status: 'published',
+        },
+      ]);
+      console.log('[ContentSeed] Seeded press and media news items.');
     }
 
     // 3. Seed Reports

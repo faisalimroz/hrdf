@@ -58,6 +58,8 @@ export const initSSLCommerzPayment = async ({
     cancel_url: cancelUrl,
     ipn_url: ipnUrl,
     shipping_method: 'NO',
+    num_of_item: '1',
+    emi_option: '0',
     product_name: productName,
     product_category: productCategory,
     product_profile: 'non-physical-goods',
@@ -130,7 +132,7 @@ export const validateSSLCommerzPayment = async (valId) => {
   }
 
   try {
-    const url = `${baseUrl}/validator/api/validationserverAPI.php?val_id=${valId}&store_id=${storeId}&store_passwd=${storePassword}&format=json`;
+    const url = `${baseUrl}/validator/api/validationserverAPI.php?val_id=${valId}&store_id=${storeId}&store_passwd=${storePassword}&v=1&format=json`;
     const response = await axios.get(url, { timeout: 10000 });
     return response.data;
   } catch (error) {

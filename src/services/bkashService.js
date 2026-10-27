@@ -185,8 +185,47 @@ export const executeBkashPayment = async (paymentId) => {
   }
 };
 
+/**
+ * Query bKash Payment Status
+ */
+export const queryBkashPayment = async (paymentId) => {
+  const { appKey, baseUrl, isConfigured } = getBkashConfig();
+
+  if (!isConfigured || paymentId?.startsWith('mock_') || paymentId?.startsWith('fallback_')) {
+    return {
+      statusCode: '0000',
+      statusMessage: 'Successful',
+      paymentID: paymentId,
+      transactionStatus: 'Completed',
+    };
+  }
+
+  try {
+    const idToken = await grantBkashToken();
+
+    const response = await axios.post(
+      `${baseUrl}/tokenized/checkout/payment/search`,
+      { paymentID: paymentId },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: idToken,
+          'X-APP-Key': appKey,
+        },
+        timeout: 10000,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('[bKash Query Payment Error]:', error.message);
+    throw error;
+  }
+};
+
 export default {
   grantBkashToken,
   createBkashPayment,
   executeBkashPayment,
+  queryBkashPayment,
 };

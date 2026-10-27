@@ -31,6 +31,13 @@ const blogSchema = new mongoose.Schema(
       required: [true, 'Cover image URL is required'],
       trim: true,
     },
+    image: {
+      type: String,
+      trim: true,
+      default: function () {
+        return this.coverImage;
+      },
+    },
     category: {
       type: String,
       required: [true, 'Category is required'],
@@ -65,6 +72,10 @@ const blogSchema = new mongoose.Schema(
       index: true,
     },
     publishedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    publishedDate: {
       type: Date,
       default: Date.now,
     },

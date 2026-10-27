@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import { seedSiteSettings } from './seeds/siteSettingSeed.js';
 import healthRoutes from './routes/health.routes.js';
@@ -11,6 +13,8 @@ import paymentRoutes from './routes/paymentRoutes.js';
 import settingRoutes from './routes/settingRoutes.js';
 import childRoutes from './routes/childRoutes.js';
 import contentRoutes from './routes/contentRoutes.js';
+import newsRoutes from './routes/newsRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 import formRoutes from './routes/formRoutes.js';
 import portalRoutes from './routes/portalRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -23,11 +27,18 @@ import errorHandler from './middleware/errorHandler.js';
 // Load environment variables
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Initialize Express application
 const app = express();
 
-// Security and HTTP headers middleware
-app.use(helmet());
+// Security and HTTP headers middleware (allowing cross-origin media rendering)
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  })
+);
 
 // CORS Configuration
 const allowedOrigins = [
@@ -61,6 +72,9 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined'));
 }
 
+// Serve uploaded media files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Root entry point
 app.get('/', (req, res) => {
   res.status(200).json({
@@ -77,6 +91,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/settings', settingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/children', childRoutes);
+app.use('/api/blogs', contentRoutes);
+app.use('/api/news', newsRoutes);
+app.use('/api/upload', uploadRoutes);
 app.use('/api', contentRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/forms', formRoutes);

@@ -12,6 +12,10 @@ import {
   createBlog,
   updateBlog,
   deleteBlog,
+  getAdminNews,
+  createNews,
+  updateNews,
+  deleteNews,
   createInitiative,
   updateInitiative,
   deleteInitiative,
@@ -43,6 +47,12 @@ router.get('/children/:id/history', getChildHistory);
 router.post('/blogs', createBlog);
 router.put('/blogs/:id', updateBlog);
 router.delete('/blogs/:id', deleteBlog);
+
+// 4B. News CMS
+router.get('/news', getAdminNews);
+router.post('/news', createNews);
+router.put('/news/:id', updateNews);
+router.delete('/news/:id', deleteNews);
 
 // 5. Initiatives CMS
 router.post('/initiatives', createInitiative);
