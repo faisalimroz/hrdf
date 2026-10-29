@@ -49,7 +49,7 @@ app.use(
 const allowedOrigins = [
   'https://hrdf-client.vercel.app', // Your deployed frontend
   process.env.CLIENT_URL,            // Environment variable if set
-  'https://hrdf-drab.vercel.app',
+  'https://hrdf-client.vercel.app/',
   'https://hrdf-mi39.onrender.com',    // Your backend domain (if needed)
   'http://localhost:3000',           // Local dev
   'http://localhost:5173',           // Local dev (Vite)
