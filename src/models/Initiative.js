@@ -72,6 +72,34 @@ const initiativeSchema = new mongoose.Schema(
       default: 'active',
       index: true,
     },
+    location: {
+      type: String,
+      default: 'Nationwide, Bangladesh',
+      trim: true,
+    },
+    targetReach: {
+      type: String,
+      default: '1,000+ Students & Families',
+      trim: true,
+    },
+    updates: [
+      {
+        title: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        date: {
+          type: Date,
+          default: Date.now,
+        },
+        snippet: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+      },
+    ],
     isFeatured: {
       type: Boolean,
       default: false,

@@ -27,6 +27,20 @@ export const seedContent = async () => {
           donorCount: 420,
           status: 'active',
           isFeatured: true,
+          location: 'Sunamganj, Habiganj & Kurigram',
+          targetReach: '12,500 Rural Primary Students',
+          updates: [
+            {
+              title: 'Phase 1 Deployment: 45 Solar Smartboards Installed',
+              date: new Date('2026-09-20'),
+              snippet: 'Classrooms in 8 riverine char schools in Sunamganj are now fully powered by off-grid solar kits and interactive tablets.',
+            },
+            {
+              title: 'Teacher Tele-Education Workshop Concluded',
+              date: new Date('2026-10-15'),
+              snippet: 'Over 60 rural primary instructors completed Cambridge-aligned interactive digital lesson module training.',
+            },
+          ],
         },
         {
           title: 'Warm Winter Smile 2026',
@@ -40,6 +54,15 @@ export const seedContent = async () => {
           donorCount: 310,
           status: 'active',
           isFeatured: true,
+          location: 'Panchagarh, Dinajpur & Nilphamari',
+          targetReach: '25,000 Children & Elders',
+          updates: [
+            {
+              title: '15,000 High-Grade Thermal Fleece Jackets Procured',
+              date: new Date('2026-10-10'),
+              snippet: 'Local cooperative textile partners delivered the first shipment of thermal windbreakers for border schools.',
+            },
+          ],
         },
         {
           title: 'Youth Leadership & Vocational Fellowship',
@@ -53,6 +76,15 @@ export const seedContent = async () => {
           donorCount: 180,
           status: 'active',
           isFeatured: false,
+          location: 'Dhaka, Chattogram, Sylhet & Khulna',
+          targetReach: '5,000 Youth Civic Leaders',
+          updates: [
+            {
+              title: 'Fellowship Cohort 2026 Orientation Launched',
+              date: new Date('2026-09-01'),
+              snippet: 'Selected fellows from 24 public universities joined introductory climate advocacy sessions in Dhaka.',
+            },
+          ],
         },
         {
           title: 'Safe Water & Hygiene for Slum Schools',

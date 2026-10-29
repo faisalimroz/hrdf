@@ -20,6 +20,7 @@ import portalRoutes from './routes/portalRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import { seedChildren } from './seeds/childSeed.js';
 import { seedContent } from './seeds/contentSeed.js';
+import { seedSchoolBranches } from './seeds/schoolSeed.js';
 import { seedAdminUser } from './seeds/adminSeed.js';
 import notFound from './middleware/notFound.js';
 import errorHandler from './middleware/errorHandler.js';
@@ -119,6 +120,7 @@ const startServer = async () => {
     await seedSiteSettings();
     await seedChildren();
     await seedContent();
+    await seedSchoolBranches();
     await seedAdminUser();
 
     // 3. Start listening for incoming connections

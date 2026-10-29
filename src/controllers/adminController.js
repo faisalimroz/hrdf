@@ -5,6 +5,9 @@ import Donation from '../models/Donation.js';
 import Blog from '../models/Blog.js';
 import News from '../models/News.js';
 import Initiative from '../models/Initiative.js';
+import Career from '../models/Career.js';
+import CareerApplication from '../models/CareerApplication.js';
+import SchoolBranch from '../models/SchoolBranch.js';
 import SiteSetting from '../models/SiteSetting.js';
 
 // ============================================================================
@@ -537,8 +540,20 @@ export const deleteNews = async (req, res, next) => {
  */
 export const createInitiative = async (req, res, next) => {
   try {
-    const { title, summary, description, category, bannerImage, targetAmount, isFeatured, status } =
-      req.body;
+    const {
+      title,
+      summary,
+      description,
+      category,
+      bannerImage,
+      targetAmount,
+      raisedAmount,
+      isFeatured,
+      status,
+      location,
+      targetReach,
+      updates,
+    } = req.body;
 
     if (!title || !description || !bannerImage || !category) {
       return res.status(400).json({
@@ -554,8 +569,12 @@ export const createInitiative = async (req, res, next) => {
       category,
       bannerImage: bannerImage.trim(),
       targetAmount: Number(targetAmount) || 0,
+      raisedAmount: Number(raisedAmount) || 0,
       isFeatured: Boolean(isFeatured),
       status: status || 'active',
+      location: location ? location.trim() : 'Nationwide, Bangladesh',
+      targetReach: targetReach ? targetReach.trim() : '1,000+ Beneficiaries',
+      updates: Array.isArray(updates) ? updates : [],
     });
 
     res.status(201).json({
@@ -735,6 +754,351 @@ export const getAdminDonations = async (req, res, next) => {
   }
 };
 
+// ============================================================================
+// 8. SCHOOL BRANCHES & TEACHER RECRUITMENT CMS
+// ============================================================================
+
+/**
+ * @route   GET /api/admin/schools
+ * @desc    Fetch all school branches
+ * @access  Private/Admin
+ */
+export const getAdminSchools = async (req, res, next) => {
+  try {
+    const { search, district, status } = req.query;
+    const query = {};
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { location: { $regex: search, $options: 'i' } },
+        { district: { $regex: search, $options: 'i' } },
+      ];
+    }
+    if (district && district !== 'all') query.district = district;
+    if (status && status !== 'all') query.status = status;
+
+    const schools = await SchoolBranch.find(query).sort({ createdAt: -1 }).lean();
+
+    res.status(200).json({
+      success: true,
+      count: schools.length,
+      schools,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   POST /api/admin/schools
+ * @desc    Create school branch with Google Form links
+ * @access  Private/Admin
+ */
+export const createSchool = async (req, res, next) => {
+  try {
+    const { name, location, district, image, primaryFormUrl, secondaryFormUrl, description, status } =
+      req.body;
+
+    if (!name || !location || !district || !image || !primaryFormUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'School name, location, district, image, and Primary Form URL are required',
+      });
+    }
+
+    const school = await SchoolBranch.create({
+      name: name.trim(),
+      location: location.trim(),
+      district: district.trim(),
+      image: image.trim(),
+      primaryFormUrl: primaryFormUrl.trim(),
+      secondaryFormUrl: secondaryFormUrl ? secondaryFormUrl.trim() : '',
+      description: description ? description.trim() : '',
+      status: status || 'active',
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'School branch created successfully',
+      school,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   PUT /api/admin/schools/:id
+ * @desc    Update school branch details
+ * @access  Private/Admin
+ */
+export const updateSchool = async (req, res, next) => {
+  try {
+    const school = await SchoolBranch.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!school) {
+      return res.status(404).json({ success: false, error: 'School branch not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'School branch updated successfully',
+      school,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   DELETE /api/admin/schools/:id
+ * @desc    Delete a school branch
+ * @access  Private/Admin
+ */
+export const deleteSchool = async (req, res, next) => {
+  try {
+    const school = await SchoolBranch.findByIdAndDelete(req.params.id);
+    if (!school) {
+      return res.status(404).json({ success: false, error: 'School branch not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'School branch deleted successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ============================================================================
+// 9. CAREER CIRCULARS & CANDIDATE APPLICATIONS CMS
+// ============================================================================
+
+/**
+ * @route   GET /api/admin/jobs
+ * @desc    List all career vacancies with total candidate application counts
+ * @access  Private/Admin
+ */
+export const getAdminJobs = async (req, res, next) => {
+  try {
+    const { search, department, status } = req.query;
+    const query = {};
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { location: { $regex: search, $options: 'i' } },
+      ];
+    }
+    if (department && department !== 'all') query.department = department;
+    if (status && status !== 'all') query.status = status;
+
+    const jobs = await Career.find(query).sort({ createdAt: -1 }).lean();
+
+    const jobIds = jobs.map((j) => j._id);
+    const appCounts = await CareerApplication.aggregate([
+      { $match: { jobId: { $in: jobIds } } },
+      { $group: { _id: '$jobId', count: { $sum: 1 } } },
+    ]);
+
+    const countMap = {};
+    appCounts.forEach((c) => {
+      countMap[c._id.toString()] = c.count;
+    });
+
+    const jobsWithCounts = jobs.map((j) => ({
+      ...j,
+      applicationsCount: countMap[j._id.toString()] || 0,
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: jobsWithCounts.length,
+      jobs: jobsWithCounts,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   POST /api/admin/jobs
+ * @desc    Create a new career circular
+ * @access  Private/Admin
+ */
+export const createJob = async (req, res, next) => {
+  try {
+    const {
+      title,
+      department,
+      location,
+      type,
+      deadline,
+      description,
+      requirements,
+      responsibilities,
+      status,
+    } = req.body;
+
+    if (!title || !department || !location || !deadline || !description) {
+      return res.status(400).json({
+        success: false,
+        error: 'Title, department, location, deadline, and description are required',
+      });
+    }
+
+    const job = await Career.create({
+      title: title.trim(),
+      department,
+      location: location.trim(),
+      type: type || 'Full-Time',
+      deadline: new Date(deadline),
+      description,
+      requirements: Array.isArray(requirements)
+        ? requirements
+        : requirements
+        ? requirements.split('\n').filter(Boolean)
+        : [],
+      responsibilities: Array.isArray(responsibilities)
+        ? responsibilities
+        : responsibilities
+        ? responsibilities.split('\n').filter(Boolean)
+        : [],
+      status: status || 'active',
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Job circular created successfully',
+      job,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   PUT /api/admin/jobs/:id
+ * @desc    Update a career circular
+ * @access  Private/Admin
+ */
+export const updateJob = async (req, res, next) => {
+  try {
+    const job = await Career.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!job) {
+      return res.status(404).json({ success: false, error: 'Job circular not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Job circular updated successfully',
+      job,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   DELETE /api/admin/jobs/:id
+ * @desc    Delete a career circular and associated applications
+ * @access  Private/Admin
+ */
+export const deleteJob = async (req, res, next) => {
+  try {
+    const job = await Career.findByIdAndDelete(req.params.id);
+    if (!job) {
+      return res.status(404).json({ success: false, error: 'Job circular not found' });
+    }
+
+    await CareerApplication.deleteMany({ jobId: req.params.id });
+
+    res.status(200).json({
+      success: true,
+      message: 'Job circular and candidate applications removed successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   GET /api/admin/jobs/:id/applications
+ * @desc    View candidate applications submitted for a job opening
+ * @access  Private/Admin
+ */
+export const getJobApplications = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status, search } = req.query;
+
+    const query = { jobId: id };
+    if (status && status !== 'all') query.status = status;
+    if (search) {
+      query.$or = [
+        { fullName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [job, applications] = await Promise.all([
+      Career.findById(id).lean(),
+      CareerApplication.find(query).sort({ createdAt: -1 }).lean(),
+    ]);
+
+    if (!job) {
+      return res.status(404).json({ success: false, error: 'Job circular not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      job,
+      count: applications.length,
+      applications,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   PUT /api/admin/jobs/applications/:appId/status
+ * @desc    Update candidate application review status
+ * @access  Private/Admin
+ */
+export const updateApplicationStatus = async (req, res, next) => {
+  try {
+    const { appId } = req.params;
+    const { status, adminNotes } = req.body;
+
+    const application = await CareerApplication.findById(appId);
+    if (!application) {
+      return res.status(404).json({ success: false, error: 'Application not found' });
+    }
+
+    if (status) application.status = status;
+    if (adminNotes !== undefined) application.adminNotes = adminNotes;
+
+    await application.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Candidate application marked as ${status}`,
+      application,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   getAnalytics,
   getUsers,
@@ -757,4 +1121,14 @@ export default {
   getAdminSettings,
   updateAdminSettings,
   getAdminDonations,
+  getAdminSchools,
+  createSchool,
+  updateSchool,
+  deleteSchool,
+  getAdminJobs,
+  createJob,
+  updateJob,
+  deleteJob,
+  getJobApplications,
+  updateApplicationStatus,
 };

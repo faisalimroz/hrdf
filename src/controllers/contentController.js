@@ -2,6 +2,9 @@ import Blog from '../models/Blog.js';
 import Initiative from '../models/Initiative.js';
 import Report from '../models/Report.js';
 import Career from '../models/Career.js';
+import CareerApplication from '../models/CareerApplication.js';
+import SchoolBranch from '../models/SchoolBranch.js';
+import mongoose from 'mongoose';
 
 /**
  * @route   GET /api/blogs
@@ -119,6 +122,40 @@ export const getInitiatives = async (req, res, next) => {
 };
 
 /**
+ * @route   GET /api/initiatives/:id
+ * @desc    Fetch individual initiative project by ID or slug
+ * @access  Public
+ */
+export const getInitiativeById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    let initiative;
+
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      initiative = await Initiative.findById(id).lean();
+    }
+
+    if (!initiative) {
+      initiative = await Initiative.findOne({ slug: id }).lean();
+    }
+
+    if (!initiative) {
+      return res.status(404).json({
+        success: false,
+        error: 'Initiative not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      initiative,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * @route   GET /api/reports
  * @desc    Fetch annual audit reports and transparency documentation
  * @access  Public
@@ -180,10 +217,132 @@ export const getCareers = async (req, res, next) => {
   }
 };
 
+/**
+ * @route   GET /api/careers/:id
+ * @desc    Fetch individual career circular by ID
+ * @access  Public
+ */
+export const getCareerById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid career vacancy ID',
+      });
+    }
+
+    const career = await Career.findById(id).lean();
+
+    if (!career) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job circular not found or has expired',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      career,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   POST /api/careers/:id/apply
+ * @desc    Submit job application for a specific circular
+ * @access  Public
+ */
+export const applyForCareer = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const {
+      fullName,
+      email,
+      phone,
+      resumeUrl,
+      coverLetter,
+      experienceYears,
+      expectedSalary,
+    } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid career circular ID',
+      });
+    }
+
+    const career = await Career.findById(id);
+    if (!career) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job circular not found',
+      });
+    }
+
+    if (!fullName || !email || !phone || !resumeUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'Full name, email, phone number, and resume are required',
+      });
+    }
+
+    const application = await CareerApplication.create({
+      jobId: career._id,
+      jobTitle: career.title,
+      fullName: fullName.trim(),
+      email: email.trim().toLowerCase(),
+      phone: phone.trim(),
+      resumeUrl: resumeUrl.trim(),
+      coverLetter: coverLetter ? coverLetter.trim() : '',
+      experienceYears: Number(experienceYears) || 0,
+      expectedSalary: expectedSalary ? expectedSalary.trim() : '',
+      status: 'pending',
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Your job application has been submitted successfully. Our HR team will review your profile.',
+      application,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   GET /api/schools
+ * @desc    Fetch active school branches for Become a Teacher
+ * @access  Public
+ */
+export const getSchoolBranches = async (req, res, next) => {
+  try {
+    const schools = await SchoolBranch.find({ status: 'active' })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      count: schools.length,
+      schools,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   getBlogs,
   getBlogBySlug,
   getInitiatives,
+  getInitiativeById,
   getReports,
   getCareers,
+  getCareerById,
+  applyForCareer,
+  getSchoolBranches,
 };

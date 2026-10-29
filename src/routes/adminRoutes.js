@@ -22,6 +22,16 @@ import {
   getAdminSettings,
   updateAdminSettings,
   getAdminDonations,
+  getAdminSchools,
+  createSchool,
+  updateSchool,
+  deleteSchool,
+  getAdminJobs,
+  createJob,
+  updateJob,
+  deleteJob,
+  getJobApplications,
+  updateApplicationStatus,
 } from '../controllers/adminController.js';
 
 const router = express.Router();
@@ -65,5 +75,19 @@ router.put('/settings', updateAdminSettings);
 
 // 7. Donations & Transaction Audits
 router.get('/donations', getAdminDonations);
+
+// 8. School Branches & Teacher Recruitment CMS
+router.get('/schools', getAdminSchools);
+router.post('/schools', createSchool);
+router.put('/schools/:id', updateSchool);
+router.delete('/schools/:id', deleteSchool);
+
+// 9. Career Circulars & Job Applications Review
+router.get('/jobs', getAdminJobs);
+router.post('/jobs', createJob);
+router.put('/jobs/:id', updateJob);
+router.delete('/jobs/:id', deleteJob);
+router.get('/jobs/:id/applications', getJobApplications);
+router.put('/jobs/applications/:appId/status', updateApplicationStatus);
 
 export default router;

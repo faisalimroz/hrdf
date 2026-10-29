@@ -8,6 +8,8 @@ import News from './News.js';
 import Initiative from './Initiative.js';
 import Report from './Report.js';
 import Career from './Career.js';
+import CareerApplication from './CareerApplication.js';
+import SchoolBranch from './SchoolBranch.js';
 import FormSubmission from './FormSubmission.js';
 
 export {
@@ -21,6 +23,8 @@ export {
   Initiative,
   Report,
   Career,
+  CareerApplication,
+  SchoolBranch,
   FormSubmission,
 };
 
@@ -35,5 +39,7 @@ export default {
   Initiative,
   Report,
   Career,
+  CareerApplication,
+  SchoolBranch,
   FormSubmission,
 };
