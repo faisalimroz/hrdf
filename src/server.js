@@ -42,10 +42,17 @@ app.use(
 );
 
 // CORS Configuration
+// const allowedOrigins = [
+//   process.env.CLIENT_URL || 'http://localhost:3000 || https://hrdf-drab.vercel.app/',
+//   'http://localhost:5173',
+// ];
 const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:3000 || https://hrdf-drab.vercel.app/',
-  'http://localhost:5173',
-];
+  'https://hrdf-client.vercel.app', // Your deployed frontend
+  process.env.CLIENT_URL,            // Environment variable if set
+  'https://hrdf-drab.vercel.app',    // Your backend domain (if needed)
+  'http://localhost:3000',           // Local dev
+  'http://localhost:5173',           // Local dev (Vite)
+].filter(Boolean); // Removes undefined/null values if process.env.CLIENT_URL is empty
 
 app.use(
   cors({
